@@ -1,53 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Socket Server</title>
-    <style>
-        body {
-            background-color: rgb(0,0,0, 0.9);
-        }
-        h1 {
-            color: rgb(129, 129, 105);
-            font-weight: 500;
-            font-size: 65px;
-            font-family: Avenir, Arial, Helvetica, sans-serif;
-            width: 400px;
-            position: absolute;
-            top: 330px;
-            left: 20px;
-            transform: rotate(-90deg);
-            transform-origin: left top;
-
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socket Server — Mapas</title>
+  <style>
+    body {
+      background-color: rgb(0, 0, 0, 0.9);
+      color: rgb(200, 200, 200);
+      font-family: system-ui, sans-serif;
+      padding: 1rem;
+    }
+    h1 { font-size: 1.5rem; }
+    pre { font-size: 0.85rem; overflow: auto; }
+  </style>
 </head>
 <body>
-    <h1>Cliente Web</h1>
+  <h1>Cliente Web — Prueba Socket.IO (usuarios en mapa)</h1>
+  <p>Puerto: 3200. Eventos: <code>CLIENT_REGISTER</code>, <code>CLIENT_MOVE</code>, <code>GET_CLIENTS</code>, <code>CLIENT_JOINED</code>, <code>CLIENT_LEFT</code>, <code>CLIENT_MOVED</code>.</p>
+  <pre id="log">Conectando...</pre>
 
-    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+  
+  <script>
+    const logEl = document.getElementById("log");
+    const log = (msg) => {
+      logEl.textContent = logEl.textContent + "\n" + (typeof msg === "string" ? msg : JSON.stringify(msg, null, 2));
+    };
 
-    <script>
-        const socket = io();
-        window.socket = socket 
-        
-        socket.on("saludo", (payload) => {
-            console.log("Mensaje del servidor:", payload);
+    const socket = io({ path: "/socket.io/" });
+    window.socket = socket;
+
+    socket.on("connect", () => {
+      log("Conectado. socket.id: " + socket.id);
+      // Unirse como participante (mismo contrato que Flutter: name, color, lng, lat)
+      setTimeout(() => {
+        socket.emit("CLIENT_REGISTER", {
+          nomen: "Web",
+          color: "#009900",
+          lng: -122.467895,
+          lat: 37.800126
         });
+        log("Emitido: client_register");
+      }, 300);
+    });
+    socket.on("disconnect", () => log("Desconectado"));
 
-        socket.on("chat", (msg) => {
-            console.log("Mensaje de chat recibido:", msg);
-        });
-
-        socket.on("disconnect", () => 
-            console.log("Perdimos conexión con el servidor"))
-
-            socket.on("BANDS_LIST", (bands) => {
-                console.clear();
-                console.table(bands);
-            })
-       
-    </script>
+    socket.on("GET_CLIENTS", (list) => log("get_clients: " + JSON.stringify(list)));
+    socket.on("CLIENT_JOINED", (p) => log("client_joined: " + JSON.stringify(p)));
+    socket.on("CLIENT_LEFT", (p) => log("client_left: " + JSON.stringify(p)));
+    socket.on("CLIENT_MOVED", (p) => log("client_moved: " + JSON.stringify(p)));
+  </script>
 </body>
 </html>
